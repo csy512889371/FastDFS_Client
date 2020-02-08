@@ -1,4 +1,4 @@
-FastDFS-Client 1.26.5(2018-12-24)
+FastDFS-Client 1.27.1(2020-1-27)
 ---
 
 This is a java client lib for [FastDFS](https://github.com/happyfish100/fastdfs).
@@ -17,6 +17,10 @@ This is a java client lib for [FastDFS](https://github.com/happyfish100/fastdfs)
 4. 支持上传图片时候检查图片格式，并且自动生成缩略图
 5. 在SpringBoot当中自动导入依赖
 
+## 参考文档
+
+想要学习掌握更多FastDFS的架构原理可以参考本[项目文档](https://github.com/tobato/FastDFS_Client/wiki).
+
 ## 修改日志
 
 版本更新情况请查看[修改日志](/CHANGELOG.md)
@@ -30,7 +34,7 @@ This is a java client lib for [FastDFS](https://github.com/happyfish100/fastdfs)
     <version>2.0.0.RELEASE</version>
     <relativePath />
     
-* JDK环境要求  1.7
+* JDK环境要求  1.8
 * FastDFS服务端 5.07 测试通过
 
 ## 单元测试
@@ -67,7 +71,7 @@ Maven依赖为
     <dependency>
         <groupId>com.github.tobato</groupId>
         <artifactId>fastdfs-client</artifactId>
-        <version>1.26.5</version>
+        <version>1.27.1</version>
     </dependency>
 
 
@@ -93,7 +97,7 @@ Maven依赖为
         // 导入依赖组件
     }
     
-对的，只需要一行注解 @Import(FdfsClientConfig.class)就可以拥有带有连接池的FastDFS Java客户端了。
+只需要一行注解 @Import(FdfsClientConfig.class)就可以拥有带有连接池的FastDFS Java客户端了。
 
 >注意：`@EnableMBeanExport`解决问题JMX重复注册问题,[issue #8](../../issues/8) [issue #18](../../issues/8)，不要再配置 `spring.jmx.enabled=false`，以免影响SpringBoot默认的JMX监控。
 
@@ -111,15 +115,32 @@ Maven依赖为
         - 192.168.1.105:22122
         - 192.168.1.106:22122 
 
-如果有必要可以参考 apache.pool2 参数配置连接池属性
+### 4.连接池的管理参数
+
+应用启动后拥有两个连接池管理对象:
+
+* Tracker连接池(`TrackerConnectionManager`)
+* Storage连接池(`FdfsConnectionManager`)
+
+必要的时候可以注入这两个对象，跟踪打印并分析连接池的情况
+
+两个连接池的参数配置一致，可参考 ConnectionPoolConfig 与 apache.pool2 进行优化配置，默认配置为
 
     fdfs:
        ..其他配置信息..
       pool:
-        #从池中借出的对象的最大数目
-        max-total: 153
-        #获取连接时的最大等待毫秒数100
-         max-wait-millis: 102
+        #从池中借出的对象的最大数目（配置为-1表示不限制）
+        max-total: -1
+        #获取连接时的最大等待毫秒数(默认配置为5秒)
+        max-wait-millis: 5*1000
+        #每个key最大连接数
+        max-total-per-key: 50
+        #每个key对应的连接池最大空闲连接数
+        max-idle-per-key: 10
+        #每个key对应的连接池最小空闲连接数
+        max_idle_per_key: 5
+
+注意: key配置的是连接服务端的地址(IP+端口)连接情况，如果有连接不够用的情况可以调整以上参数
 
 ### 4.使用接口服务对Fdfs服务端进行操作
 
@@ -133,16 +154,56 @@ Maven依赖为
 
 ## 常见问题
 
-### 1.如何在没有spring-boot的情况下使用
+### 1.如何在没有spring-boot的情况下使用？
 
 参考下面文章进行改造
 
 https://blog.csdn.net/wzl19870309/article/details/74049204
 
-### 2.高并发下测试出现上传的文件和得到的返回路径的文件不是同一个
+### 2.高并发下测试出现上传的文件和得到的返回路径的文件不是同一个？
 
 通过加大超时时间后解决
 
     soTimeout: 1500
     connectTimeout: 600
 
+### 3.新手不会用
+
+阅读单元测试，从学习test/java/com/github/tobato/fastdfs/service下的单元测试入手
+
+### 4.生成的缩略图怎么访问？
+
+缩略图为上传文件名+缩略图后缀(默认_150x150)
+
+如:源图上传后路径为 xxx.jpg,缩略图为 xxx_150x150.jpg
+
+    源图 http://localhost:8098/M00/00/17/rBEAAl33pQaAWNQNAAHYvQQn-YE374.jpg
+    缩略图 http://localhost:8098/M00/00/17/rBEAAl33pQaAWNQNAAHYvQQn-YE374_150x150.jpg
+    
+### 5.返回的文件名看起来乱糟糟的，能自定义文件名吗？能指定上传路径吗？
+
+上传以后的文件名是FastDfs服务端根据一定规则生成的，不可以修改文件名，因此也不可以由客户端指定上传的路径。
+客户端只能控制把文件上传到哪一个分组(Group).
+
+一般处理方法是把服务端返回的文件路径记录到数据库里，自己按需要在数据库里再记录一个便于识别的文件名。
+
+### 6.请问当上传100M以上文件怎么才能获取进度?
+
+FastDFS设计是用来存储小文件的，过大的文件处理方案是拆分为小文件，可跟踪小文件的上传情况。
+如果应用场景都是处理大文件，可能选择其他分布式文件系统方案会更合适。
+
+### 7.文件扩展名字数长度限制?
+
+我需要上传文件扩展名很长的文件到fastdfs，但是发现扩展名总是会被截取，追了一下发现是Constants限制了FDFS_FILE_EXT_NAME_MAX_LEN = 6 ，请问这个参数可以配置吗？应该怎么修改呢？
+在我将otherConstants类里的FDFS_FILE_EXT_NAME_MAX_LEN的值从6改到16时, 尝试传一张后缀长的文件时,会报错无效参数, 
+原因是服务器上的fastDFS源码(c语言编写的那个)的commons包下fdfs_global.h中FDFS_FILE_EXT_NAME_MAX_LEN=6, 于是将6改为16, make.sh重新编译后, 
+解决了传后缀长文件的问题（#157 感谢@787390869提供解答）
+
+
+## 其他参考资料
+
+对于FDFS服务端相关的问题可以在下面的论坛找到一些材料
+
+[FastDFS论坛](http://bbs.chinaunix.net/forum-240-1.html)
+
+[FastDFS常见问题](http://bbs.chinaunix.net/thread-1920470-1-1.html)

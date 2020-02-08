@@ -1,6 +1,7 @@
 package com.github.tobato.fastdfs.domain.conn;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
  * socket连接测试
@@ -9,7 +10,7 @@ import static org.junit.Assert.*;
  */
 public class ConnectionTest extends MockServerTestBase {
 
-    // @Test
+    //@Test
     public void testClose() {
         // 创建连接
         Connection conn = createConnection();
@@ -19,11 +20,11 @@ public class ConnectionTest extends MockServerTestBase {
         assertTrue(conn.isClosed());
     }
 
-    // @Test
+    //@Test
     public void testCheck() {
         // 创建连接测试
         Connection conn = createConnection();
-        System.out.println("当前连接状态" + conn.isValid());
+        LOGGER.debug("当前连接状态={}", conn.isValid());
         conn.close();
     }
 

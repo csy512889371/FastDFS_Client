@@ -1,3 +1,51 @@
+## 1.27.1 (2020-1-27)
+
+BugFixes:
+
+   - 修复DEFAULT_RETRY_AFTER_SECOND拼写错误(#181 @liangxiong3403)
+   - 修复metaDataSet default value logic bug(#182 @liangxiong3403)
+
+Update:
+
+   - JDK版本升级到1.8版本,做一个大的版本升级(#189 @HaoQiangJiang)
+   - 重命名ConnectionManager ，解决与openfeign包冲突(#186 @summitxf)
+   - 合并增加一种文件下载回调方法(#161 @xlb ),并在此基础上重构
+   - 增加连接池控制参数：连接空闲的最小时间、创建时是否进行连接测试、借出时是否检测有效性
+   - 调整连接池默认参数，关闭自动检查机制，如果需要自动检查，请手动开启
+   
+   感谢@HaoQiangJiang @summitxf 提交更新
+
+Docs:
+
+   - 常见问题:生成的缩略图该怎么访问 (#179 @msh01)
+   - 常见问题:能自定义上传路径么，或者有没有类似的解决方案(#173 @yj348382870)
+   - 常见问题:请问当上传100M以上文件怎么才能获取进度(#172 @lxge)
+   
+升级提示:
+
+  - 没有接口改动，默认JDK升级到1.8版本
+
+## 1.26.7 (2019-08-24)
+
+BugFixes:
+
+   - 修复StorePath.getGroupName中有额外的输出(#137 @jerry-yuan)
+   - 修复DefaultGenerateStorageClient当中错误的LOGGER.error(#136 @Gsmsu @zhangmrit)
+   
+升级提示:
+
+  - 没有接口改动，可以直接从1.26.6升级
+   
+## 1.26.6 (2019-06-08)
+
+BugFixes:
+
+   - 修复commons-beanutils版本安全漏洞(#94 @robby0321 )
+   - 修复PNG背景颜色为透明时，生成缩略图背景颜色为黑色(#110 @lude008)
+   - 修复当发生异常时，怎么把链接中对应的流数据一次性清空，处理方案：在连接池移除此连接(#121 @tdwu)
+   - 修复连接池不能正常分配问题(#116 @JackHuang0801)
+   - 修复FileInfe实体类ToString时间一直为1970年的问题(#109 @ENCHIGO)
+   
 ## 1.26.5 (2018-12-30)
 
 Features:
